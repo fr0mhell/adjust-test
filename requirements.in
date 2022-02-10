@@ -9,8 +9,7 @@ django-filter
 # Country choices using ISO 3166-1
 django-countries
 
-# List of useful Django utils
+# List of useful utils
 django-extensions
-
-#
 ipython
+Werkzeug
