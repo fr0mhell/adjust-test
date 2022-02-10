@@ -40,7 +40,7 @@ class MetricTestCase(TestCase):
 
     def test_aggregation_one_field(self):
         group_by = ['channel']
-        display_fields = ['impressions']
+        display_columns = ['impressions']
         expected_impressions = [
             sum(m.impressions for m in self.metrics[0:3]),
             sum(m.impressions for m in self.metrics[3:6]),
@@ -55,7 +55,7 @@ class MetricTestCase(TestCase):
         result = self.aggregator.aggregate(
             queryset=self.queryset,
             group_by_columns=group_by,
-            display_columns=display_fields,
+            display_columns=display_columns,
         ).order_by(*group_by)
 
         self.assertEqual(len(expected_data), len(result))
@@ -66,7 +66,7 @@ class MetricTestCase(TestCase):
 
     def test_aggregation_one_field_cpi(self):
         group_by = ['channel']
-        display_fields = ['cpi']
+        display_columns = ['cpi']
         expected_cpis = [
             sum(m.spend for m in self.metrics[0:3]) / sum(m.installs for m in self.metrics[0:3]),
             sum(m.spend for m in self.metrics[3:6]) / sum(m.installs for m in self.metrics[3:6]),
@@ -81,7 +81,7 @@ class MetricTestCase(TestCase):
         result = self.aggregator.aggregate(
             queryset=self.queryset,
             group_by_columns=group_by,
-            display_columns=display_fields,
+            display_columns=display_columns,
         ).order_by(*group_by)
 
         self.assertEqual(len(expected_data), len(result))
@@ -92,7 +92,7 @@ class MetricTestCase(TestCase):
 
     def test_aggregation_two_fields(self):
         group_by = ['channel', 'country']
-        display_fields = ['clicks']
+        display_columns = ['clicks']
         expected_clicks = [
             sum(m.clicks for m in self.metrics[0:2]),
             self.metrics[2].clicks,
@@ -113,7 +113,7 @@ class MetricTestCase(TestCase):
         result = self.aggregator.aggregate(
             queryset=self.queryset,
             group_by_columns=group_by,
-            display_columns=display_fields,
+            display_columns=display_columns,
         ).order_by(*group_by)
 
         self.assertEqual(len(expected_data), len(result))
@@ -124,7 +124,7 @@ class MetricTestCase(TestCase):
 
     def test_aggregation_two_fields_cpi(self):
         group_by = ['channel', 'country']
-        display_fields = ['cpi']
+        display_columns = ['cpi']
         expected_cpi = [
             sum(m.spend for m in self.metrics[0:2]) / sum(m.installs for m in self.metrics[0:2]),
             self.metrics[2].spend / self.metrics[2].installs,
@@ -145,7 +145,7 @@ class MetricTestCase(TestCase):
         result = self.aggregator.aggregate(
             queryset=self.queryset,
             group_by_columns=group_by,
-            display_columns=display_fields,
+            display_columns=display_columns,
         ).order_by(*group_by)
 
         self.assertEqual(len(expected_data), len(result))
