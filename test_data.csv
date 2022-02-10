@@ -1,0 +1,10 @@
+date,channel,country,os,impressions,clicks,installs,spend,revenue
+2017-05-17,adcolony,US,android,19887,494,76,148.2,149.04
+2017-05-17,adcolony,US,ios,13886,336,60,100.8,210.24
+2017-05-18,adcolony,CA,ios,20427,539,102,161.7,179.6
+2017-05-17,apple_search_ads,GB,android,3180,118,25,50.0,20.0
+2017-05-17,apple_search_ads,GB,ios,6683,226,43,86.0,149.27
+2017-05-17,apple_search_ads,GB,android,22426,729,139,278.0,418.64
+2017-05-17,chartboost,FR,ios,6624,204,34,86.0,10.0
+2017-05-17,chartboost,GB,android,3210,117,18,36.0,59.6
+2017-05-17,chartboost,US,ios,3231,115,31,62.0,79.6
