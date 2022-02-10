@@ -1,7 +1,9 @@
-from .models import Metric
-from typing import Set, Callable, Dict, List, Tuple
-from django.db.models import Sum, QuerySet, Aggregate
+from typing import Callable, Dict, List, Set, Tuple
+
 from django.core.exceptions import FieldError
+from django.db.models import Aggregate, QuerySet, Sum
+
+from .models import Metric
 
 CPI = 'cpi'
 

@@ -1,7 +1,11 @@
-from django_filters.rest_framework import FilterSet, DateFromToRangeFilter, MultipleChoiceFilter
+from django_countries import countries
+from django_filters.rest_framework import (
+    DateFromToRangeFilter,
+    FilterSet,
+    MultipleChoiceFilter,
+)
 
 from ..models import Metric
-from django_countries import countries
 
 
 class MetricFilter(FilterSet):

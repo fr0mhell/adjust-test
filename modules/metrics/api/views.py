@@ -1,12 +1,15 @@
-from rest_framework import mixins, viewsets
-from rest_framework.response import Response
-from ..models import Metric
-from .serializers import MetricSerializer
-from rest_framework.filters import OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend
 from typing import List
-from .filters import MetricFilter
+
+from rest_framework import mixins, viewsets
+from rest_framework.filters import OrderingFilter
+from rest_framework.response import Response
+
+from django_filters.rest_framework import DjangoFilterBackend
+
+from ..models import Metric
 from ..services import MetricAggregator
+from .filters import MetricFilter
+from .serializers import MetricSerializer
 
 
 class MetricViewSet(
@@ -70,7 +73,7 @@ class MetricViewSet(
 + 2. Add CPI computation to QuerySet
 + 3. Add tests for CPI computation
 
-4. Figure out cases I need to implement to retrieve the data:
++ 4. Figure out cases I need to implement to retrieve the data:
     + group by
     + filter
     + order
@@ -78,8 +81,9 @@ class MetricViewSet(
 + 5. Cover cases with tests
 
 + 6. Figure out how to implement st.4 in API
-7 Update API and tests with new Aggregator
++ 7 Update API and tests with new Aggregator
 8. Add tests for API
+  8.1 Fix issue with cpi, spend and installs
 9. Code style: doc strings, imports
 10. Update readme
 

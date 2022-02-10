@@ -1,5 +1,6 @@
-from ..models import Metric
 from django.test import TestCase
+
+from ..models import Metric
 from .data import metric_data
 
 

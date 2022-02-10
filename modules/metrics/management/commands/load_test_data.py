@@ -1,5 +1,7 @@
-from django.core.management.base import BaseCommand
 import csv
+
+from django.core.management.base import BaseCommand
+
 from ...models import Metric
 
 

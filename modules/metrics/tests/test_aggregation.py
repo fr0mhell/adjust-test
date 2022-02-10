@@ -1,8 +1,9 @@
-from ..models import Metric, MetricQuerySet
-from django.test import TestCase
 from django.core.exceptions import FieldError
-from .data import metric_data
+from django.test import TestCase
+
+from ..models import Metric, MetricQuerySet
 from ..services import MetricAggregator
+from .data import metric_data
 
 
 class MetricTestCase(TestCase):
