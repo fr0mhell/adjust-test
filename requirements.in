@@ -1,0 +1,10 @@
+Django<4
+
+# REST API
+djangorestframework
+
+# Filtering for REST API
+django-filter
+
+# Country choices using ISO 3166-1
+django-countries
