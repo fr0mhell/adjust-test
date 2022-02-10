@@ -2,14 +2,23 @@ from django.db import models
 from django_countries.fields import CountryField
 from django.utils.translation import gettext_lazy as _
 from typing import List
+from django.core.exceptions import FieldError
 
 CPI = 'cpi'
 
 
 class MetricQuerySet(models.QuerySet):
+    SUPPORTED_DISPLAY_FIELDS = {
+        'impressions',
+        'clicks',
+        'installs',
+        'spend',
+        'revenue',
+        'cpi',
+    }
 
     def with_cpi(self):
-        return self.annotate(cpi=models.F('spend') / models.F('installs'))
+        return self.annotate(cpi=models.Sum('spend') / models.Sum('installs'))
 
     def with_aggregation(
             self,
@@ -22,6 +31,9 @@ class MetricQuerySet(models.QuerySet):
         * SELECT SUM of every column in `columns`.
 
         """
+        if any(col not in self.SUPPORTED_DISPLAY_FIELDS for col in display_columns):
+            raise FieldError
+
         if display_cpi := CPI in display_columns:
             display_columns.remove(CPI)
 
