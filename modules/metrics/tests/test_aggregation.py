@@ -19,35 +19,36 @@ class MetricAggregatorTestCase(TestCase):
 
         cls.model_fields = tuple(field.name for field in Metric._meta.fields) + ('cpi',)
 
-    def test_aggregation_performed_model_fields(self):
-        """Aggregation is performed by model fields.
-
-        Raise errors in the following cases:
-        * AggregationError - when aggregate on the same column used in GROUP BY
-        * NotSupportedError - when a field does not support SUM aggregation on DB level.
-
-        """
-        group_by = ['channel']
-
-        for field in self.model_fields:
-            with self.subTest(supported_field=field):
-
-                if field in group_by:
-                    with self.assertRaises(AggregationError):
-                        self.aggregator.aggregate(self.queryset, group_by, [field])
-                    continue
-
-                # Right now the aggregator solution is quite limited and does not have the logic
-                # that checks if aggregation is supported for a field's type
-                # This test allows us tracking the problem and in real project will be
-                # a starting point for Aggregator improvements
-                if field == 'date':
-                    with self.assertRaises(NotSupportedError):
-                        self.aggregator.aggregate(self.queryset, group_by, [field]).first()
-                    continue
-
-                result = self.aggregator.aggregate(self.queryset, group_by, [field])
+    def test_aggregation_performed_supported_group_by_columns(self):
+        display_fields = ['spend']
+        for field in self.aggregator.supported_group_by_columns:
+            with self.subTest(supported_group_by_column=field):
+                result = self.aggregator.aggregate(self.queryset, [field], display_fields)
                 self.assertIsInstance(result[0], dict)
+
+    def test_aggregation_error_not_supported_group_by_columns(self):
+        display_fields = ['spend']
+        not_supported = [
+            field for field in self.model_fields
+            if field not in self.aggregator.supported_group_by_columns
+        ]
+        for field in not_supported:
+            with self.subTest(supported_group_by_column=field):
+                with self.assertRaises(AggregationError):
+                    self.aggregator.aggregate(self.queryset, [field], display_fields)
+
+    def test_aggregation_error_same_field_in_group_by_and_display(self):
+        group_by_fields = ['country']
+        display_fields = ['country']
+        with self.assertRaises(AggregationError):
+            self.aggregator.aggregate(self.queryset, group_by_fields, display_fields)
+
+    def test_aggregation_error_not_supported_display_column_error(self):
+        display_fields = ['date']
+        for field in self.aggregator.not_supported_display_columns:
+            with self.subTest(not_supported_field=field):
+                with self.assertRaises(AggregationError):
+                    self.aggregator.aggregate(self.queryset, [field], display_fields)
 
     def test_sum_aggregation(self):
         """Sum aggregation performed correctly when explicitly defined."""

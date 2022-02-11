@@ -59,3 +59,18 @@ class MetricApiTests(APITestCase):
         actual_data = response.data['results']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(actual_data), 6)
+
+    def test_aggregation_error_not_supported_group_by_columns(self):
+        data = {'group_by': 'installs', 'display_columns': 'spend'}
+        response = self.client.get(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_aggregation_error_same_field_in_group_by_and_display(self):
+        data = {'group_by': 'country', 'display_columns': 'country'}
+        response = self.client.get(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_aggregation_error_not_supported_display_column_error(self):
+        data = {'group_by': 'os', 'display_columns': 'date'}
+        response = self.client.get(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

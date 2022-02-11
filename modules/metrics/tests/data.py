@@ -1,3 +1,7 @@
+"""
+Test data.
+"""
+
 metric_data = [
     dict(date='2017-05-17', channel='adcolony',         country='US', os='android', impressions=1, clicks=9, installs=1, spend=5, revenue=6,),  # noqa
     dict(date='2017-05-17', channel='adcolony',         country='US', os='ios',     impressions=2, clicks=8, installs=2, spend=5, revenue=8,),  # noqa

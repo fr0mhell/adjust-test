@@ -15,6 +15,15 @@ class MetricAggregator:
 
     """
     model = Metric
+    supported_group_by_columns = (
+        'date',
+        'channel',
+        'country',
+        'os',
+    )
+    not_supported_display_columns = (
+        'date',
+    )
     supported_aggregations: Dict[str, Callable] = {
         'sum': Sum,
     }
@@ -27,9 +36,22 @@ class MetricAggregator:
             display_columns: List[str],
     ) -> QuerySet:
         """Aggregate the data using SELECT ... GROUP BY query under the hood."""
+        self._validate_group_by_columns(group_by_columns)
         aggregations = self._get_column_aggregations(group_by_columns, display_columns)
         queryset = queryset.values(*group_by_columns).annotate(**aggregations)
         return queryset
+
+    def _validate_group_by_columns(self, group_by_columns: List[str]):
+        unsupported_columns = []
+        for column in group_by_columns:
+            if column not in self.supported_group_by_columns:
+                unsupported_columns.append(column)
+
+        if unsupported_columns:
+            error_line = ', '.join(unsupported_columns)
+            raise AggregationError(
+                f'The following values are not supported in the `group_by_columns`: {error_line}'
+            )
 
     def _get_column_aggregations(
             self,
@@ -48,6 +70,12 @@ class MetricAggregator:
         for column_with_function in display_columns:
             column, *any_func = column_with_function.split('__')
 
+            if column in self.not_supported_display_columns:
+                raise AggregationError(
+                    f'The "{column}" in `display_columns` not supported. '
+                    f'The DB does not support aggregation for the data type'
+                )
+
             if column in group_by_columns:
                 raise AggregationError(
                     f'The "{column}" in `display_columns` means aggregation that conflicts with'
@@ -55,7 +83,8 @@ class MetricAggregator:
                 )
 
             # Skip `cpi` column and implement aggregation below
-            if has_cpi := column == CPI:
+            if column == CPI:
+                has_cpi = True
                 continue
 
             func = any_func[0] if any_func else None
