@@ -10,12 +10,13 @@ from ..models import Metric
 
 class MetricFilter(FilterSet):
     """Filter for `Metric` model."""
-    date = DateFromToRangeFilter()
+    date_range = DateFromToRangeFilter(field_name='date')
     country = MultipleChoiceFilter(choices=countries)
 
     class Meta:
         model = Metric
-        fields = {
-            'channel': ['exact', 'in'],
-            'os': ['exact', 'in'],
-        }
+        fields = (
+            'date',
+            'channel',
+            'os',
+        )

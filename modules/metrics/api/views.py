@@ -29,7 +29,7 @@ class MetricViewSet(
     def get_queryset(self):
         queryset = super().get_queryset()
         if not self.is_aggregation:
-            return queryset.with_cpi()
+            return queryset.with_cpi().order_by('date')
 
         group_by = self._get_group_by_columns()
         display_columns = self._get_display_columns()
@@ -44,6 +44,7 @@ class MetricViewSet(
 
     @property
     def is_aggregation(self):
+        """Check if aggregation required."""
         group_by = self.request.query_params.get('group_by', '')
         display_columns = self.request.query_params.get('display_columns', '')
         return bool(group_by and display_columns)
