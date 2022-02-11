@@ -1,12 +1,13 @@
-from django.core.exceptions import FieldError
+from django.db.utils import NotSupportedError
 from django.test import TestCase
 
-from ..models import Metric, MetricQuerySet
-from ..services import MetricAggregator
+from ..aggregations import MetricAggregator
+from ..exceptions import AggregationError
+from ..models import Metric
 from .data import metric_data
 
 
-class MetricTestCase(TestCase):
+class MetricAggregatorTestCase(TestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -16,29 +17,78 @@ class MetricTestCase(TestCase):
         cls.aggregator = MetricAggregator()
         cls.queryset = Metric.objects.all()
 
-        cls.supported_display_fields = cls.aggregator.supported_display_fields
-        cls.not_supported_display_fields = [
-            field.name for field in Metric._meta.fields
-            if field.name not in cls.supported_display_fields
-        ]
+        cls.model_fields = tuple(field.name for field in Metric._meta.fields) + ('cpi',)
 
-    def test_aggregation_performed_for_supported_fields(self):
+    def test_aggregation_performed_model_fields(self):
+        """Aggregation is performed by model fields.
+
+        Raise errors in the following cases:
+        * AggregationError - when aggregate on the same column used in GROUP BY
+        * NotSupportedError - when a field does not support SUM aggregation on DB level.
+
+        """
         group_by = ['channel']
 
-        for field in self.supported_display_fields:
+        for field in self.model_fields:
             with self.subTest(supported_field=field):
+
+                if field in group_by:
+                    with self.assertRaises(AggregationError):
+                        self.aggregator.aggregate(self.queryset, group_by, [field])
+                    continue
+
+                # Right now the aggregator solution is quite limited and does not have the logic
+                # that checks if aggregation is supported for a field's type
+                # This test allows us tracking the problem and in real project will be
+                # a starting point for Aggregator improvements
+                if field == 'date':
+                    with self.assertRaises(NotSupportedError):
+                        self.aggregator.aggregate(self.queryset, group_by, [field]).first()
+                    continue
+
                 result = self.aggregator.aggregate(self.queryset, group_by, [field])
                 self.assertIsInstance(result[0], dict)
 
-    def test_aggregation_performed_for_not_supported_fields(self):
+    def test_sum_aggregation(self):
+        """Sum aggregation performed correctly when explicitly defined."""
         group_by = ['channel']
+        display_columns = ['impressions__sum']
+        expected_impressions = [
+            sum(m.impressions for m in self.metrics[0:3]),
+            sum(m.impressions for m in self.metrics[3:6]),
+            sum(m.impressions for m in self.metrics[6:9]),
+        ]
+        expected_data = [
+            dict(channel='adcolony', impressions=expected_impressions[0]),
+            dict(channel='apple_search_ads', impressions=expected_impressions[1]),
+            dict(channel='chartboost', impressions=expected_impressions[2]),
+        ]
 
-        for field in self.not_supported_display_fields:
-            with self.subTest(supported_field=field):
-                with self.assertRaises(FieldError):
-                    self.aggregator.aggregate(self.queryset, group_by, [field])
+        result = self.aggregator.aggregate(
+            queryset=self.queryset,
+            group_by_columns=group_by,
+            display_columns=display_columns,
+        ).order_by(*group_by)
 
-    def test_aggregation_one_field(self):
+        self.assertEqual(len(expected_data), len(result))
+
+        for i in range(len(expected_data)):
+            with self.subTest(expected=expected_data[i], actual=result[i]):
+                self.assertDictEqual(expected_data[i], result[i])
+
+    def test_not_supported_aggregation(self):
+        """Raise error when unsupported aggregation used."""
+        group_by = ['channel']
+        display_columns = ['impressions__rnd']
+
+        with self.assertRaises(AggregationError):
+            self.aggregator.aggregate(
+                queryset=self.queryset,
+                group_by_columns=group_by,
+                display_columns=display_columns,
+            ).order_by(*group_by)
+
+    def test_group_by_one_field(self):
         group_by = ['channel']
         display_columns = ['impressions']
         expected_impressions = [
@@ -64,18 +114,23 @@ class MetricTestCase(TestCase):
             with self.subTest(expected=expected_data[i], actual=result[i]):
                 self.assertDictEqual(expected_data[i], result[i])
 
-    def test_aggregation_one_field_cpi(self):
+    def test_group_by_one_field_display_cpi(self):
         group_by = ['channel']
-        display_columns = ['cpi']
+        display_columns = ['installs', 'cpi']
+        expected_installs = [
+            sum(m.installs for m in self.metrics[0:3]),
+            sum(m.installs for m in self.metrics[3:6]),
+            sum(m.installs for m in self.metrics[6:9]),
+        ]
         expected_cpis = [
-            sum(m.spend for m in self.metrics[0:3]) / sum(m.installs for m in self.metrics[0:3]),
-            sum(m.spend for m in self.metrics[3:6]) / sum(m.installs for m in self.metrics[3:6]),
-            sum(m.spend for m in self.metrics[6:9]) / sum(m.installs for m in self.metrics[6:9]),
+            sum(m.spend for m in self.metrics[0:3]) / expected_installs[0],
+            sum(m.spend for m in self.metrics[3:6]) / expected_installs[1],
+            sum(m.spend for m in self.metrics[6:9]) / expected_installs[2],
         ]
         expected_data = [
-            dict(channel='adcolony', cpi=expected_cpis[0]),
-            dict(channel='apple_search_ads', cpi=expected_cpis[1]),
-            dict(channel='chartboost', cpi=expected_cpis[2]),
+            dict(channel='adcolony', installs=expected_installs[0], cpi=expected_cpis[0]),
+            dict(channel='apple_search_ads', installs=expected_installs[1], cpi=expected_cpis[1]),
+            dict(channel='chartboost', installs=expected_installs[2], cpi=expected_cpis[2]),
         ]
 
         result = self.aggregator.aggregate(
@@ -90,7 +145,7 @@ class MetricTestCase(TestCase):
             with self.subTest(expected=expected_data[i], actual=result[i]):
                 self.assertDictEqual(expected_data[i], result[i])
 
-    def test_aggregation_two_fields(self):
+    def test_group_by_two_fields(self):
         group_by = ['channel', 'country']
         display_columns = ['clicks']
         expected_clicks = [
@@ -122,7 +177,7 @@ class MetricTestCase(TestCase):
             with self.subTest(expected=expected_data[i], actual=result[i]):
                 self.assertDictEqual(expected_data[i], result[i])
 
-    def test_aggregation_two_fields_cpi(self):
+    def test_group_by_two_fields_display_cpi(self):
         group_by = ['channel', 'country']
         display_columns = ['cpi']
         expected_cpi = [

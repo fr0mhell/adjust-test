@@ -5,14 +5,12 @@ from django_countries.fields import CountryField
 
 
 class MetricQuerySet(models.QuerySet):
-    """"""
     def with_cpi(self):
-        """"""
-        return self.annotate(cpi=models.Sum('spend') / models.Sum('installs'))
+        """Compute CPI (cost per install) = spend / installs for every Metric."""
+        return self.annotate(cpi=models.F('spend') / models.F('installs'))
 
 
 class Metric(models.Model):
-    """Store metrics data."""
 
     class OSChoices(models.TextChoices):
         ANDROID = 'android', _('Android')

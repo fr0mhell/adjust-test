@@ -6,8 +6,8 @@ from rest_framework.response import Response
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from ..aggregations import MetricAggregator
 from ..models import Metric
-from ..services import MetricAggregator
 from .filters import MetricFilter
 from .serializers import MetricSerializer
 
@@ -83,7 +83,7 @@ class MetricViewSet(
 + 6. Figure out how to implement st.4 in API
 + 7 Update API and tests with new Aggregator
 8. Add tests for API
-  8.1 Fix issue with cpi, spend and installs
+  + 8.1 Fix issue with cpi, spend and installs
 9. Code style: doc strings, imports
 10. Update readme
 
